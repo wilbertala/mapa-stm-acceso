@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es-UY"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c314e">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="description" content="Acceso instalable al Mapa STM, con icono propio para Android y computadora.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<title>Mapa STM</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+<link rel="stylesheet" href="./estilos.css">
+<script defer src="./aplicacion.js"></script>
+</head><body><main class="tarjeta">
+<img src="./icon-192.png" alt="Ícono de Mapa STM" width="90" height="90">
+<h1>Mapa STM</h1>
+<p class="sub">Acceso directo con el ícono de Mapa STM en tu teléfono o PC.</p>
+<section class="pasos" aria-label="Instalación">
+ <p><strong>1.</strong> Instalá este acceso desde Chrome, con <strong>Instalar aplicación</strong> (o desde el menú ⋮).</p>
+ <button type="button" id="instalar" hidden>Instalar acceso Mapa STM</button>
+ <p><strong>2.</strong> Abrilo desde el nuevo ícono y guardá aquí tu enlace privado o de invitados, una sola vez por dispositivo.</p>
+</section>
+<label for="url">Enlace de Mapa STM</label>
+<input id="url" type="url" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="https://script.google.com/macros/s/.../exec">
+<p id="estado" aria-live="polite" class="estado"></p>
+<div class="acciones">
+<button type="button" id="guardar">Guardar y abrir mapa</button>
+<button type="button" class="secundario" id="abrir">Abrir mapa guardado</button>
+<button type="button" class="discreto" id="borrar">Olvidar enlace en este dispositivo</button>
+</div>
+<p class="nota">El enlace se guarda <strong>solo en este dispositivo</strong>. No se publica en GitHub. Si ya guardaste el acceso directo de <code>script.google.com</code> y muestra otro ícono, eliminá solamente ese acceso antiguo e instalá <strong>esta</strong> página.</p>
+<p class="nota" id="forma">Esta aplicación es un lanzador: el mapa se abre en Google Apps Script. No cambia sus datos ni sus permisos.</p>
+</main></body></html>
