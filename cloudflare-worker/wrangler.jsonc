@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "stm-mapa-api-staging",
+  "main": "src/index.mjs",
+  "compatibility_date": "2026-11-20",
+  "workers_dev": true,
+  "vars": {
+    "FRONTEND_ORIGIN": "https://wilbertala.github.io",
+    "DRIVE_FOLDER_ID": "1-1P1txzOJcYEC1qnSUzISti7ADmElo44",
+    "GOOGLE_CLIENT_ID": "CONFIGURAR_CLIENT_ID_PUBLICO",
+    "ADMIN_EMAILS": "CONFIGURAR_CORREO_ADMIN"
+  }
+}

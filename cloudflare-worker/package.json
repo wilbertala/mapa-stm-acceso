@@ -1,0 +1,10 @@
+{
+  "name":"stm-worker-readonly",
+  "private":true,
+  "type":"module",
+  "version":"0.1.0",
+  "scripts":{
+    "test":"node --test test/*.test.mjs",
+    "lint":"node --check src/index.mjs && node --check src/auth.mjs && node --check src/drive.mjs && node --check src/catalog.mjs"
+  }
+}
