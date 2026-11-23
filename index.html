@@ -1,35 +1,48 @@
 <!doctype html>
-<html lang="es-UY"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0c314e">
-<meta name="referrer" content="no-referrer">
-<meta name="robots" content="noindex,nofollow,noarchive">
-<meta name="description" content="Acceso instalable al Mapa STM, con icono propio para Android y computadora.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
-<title>Mapa STM</title>
-<link rel="manifest" href="./manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
-<link rel="stylesheet" href="./estilos.css">
-<script defer src="./aplicacion.js"></script>
-</head><body><main class="tarjeta">
-<img src="./icon-192.png" alt="Ícono de Mapa STM" width="90" height="90">
-<h1>Mapa STM</h1>
-<p class="sub">Acceso directo con el ícono de Mapa STM en tu teléfono o PC.</p>
-<section class="pasos" aria-label="Instalación">
- <p><strong>1.</strong> Instalá este acceso desde Chrome, con <strong>Instalar aplicación</strong> (o desde el menú ⋮).</p>
- <button type="button" id="instalar" hidden>Instalar acceso Mapa STM</button>
- <p><strong>2.</strong> Abrilo desde el nuevo ícono y guardá aquí tu enlace privado o de invitados, una sola vez por dispositivo.</p>
-</section>
-<label for="url">Enlace de Mapa STM</label>
-<input id="url" type="url" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="https://script.google.com/macros/s/.../exec">
-<p id="estado" aria-live="polite" class="estado"></p>
-<div class="acciones">
-<button type="button" id="guardar">Guardar y abrir mapa</button>
-<button type="button" class="secundario" id="abrir">Abrir mapa guardado</button>
-<button type="button" class="discreto" id="borrar">Olvidar enlace en este dispositivo</button>
-</div>
-<p class="nota">El enlace se guarda <strong>solo en este dispositivo</strong>. No se publica en GitHub. Si ya guardaste el acceso directo de <code>script.google.com</code> y muestra otro ícono, eliminá solamente ese acceso antiguo e instalá <strong>esta</strong> página.</p>
-<p class="nota" id="forma">Esta aplicación es un lanzador: el mapa se abre en Google Apps Script. No cambia sus datos ni sus permisos.</p>
-</main></body></html>
+<html lang="es-UY">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#123956">
+  <meta name="description" content="Mapa STM: líneas suburbanas y departamentales">
+  <title>Mapa STM — Suburbanas y departamentales</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoamYjzR+JW1nA=" crossorigin="anonymous">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./estilos.css">
+  <script src="./config.js" defer></script>
+  <script src="https://accounts.google.com/gsi/client" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous" defer></script>
+  <script src="./app.mjs" type="module"></script>
+</head>
+<body>
+<header>
+  <strong>Mapa STM</strong><span>Suburbanas y departamentales</span>
+  <div id="googleLogin" aria-label="Acceso ADMINISTRADOR"></div>
+  <button id="logout" type="button" hidden>Cerrar sesión</button>
+</header>
+<div id="notice" role="status">Iniciá sesión como ADMINISTRADOR o ingresá con un enlace de invitación.</div>
+<nav class="barra" aria-label="Controles del mapa">
+  <button id="toggle" type="button" aria-controls="filtros" aria-expanded="true">☷ Líneas y filtros</button>
+  <button id="center" type="button">◎ Centrar mapa</button>
+  <button id="clear" type="button">Quitar recorridos</button>
+</nav>
+<main>
+  <aside id="filtros" aria-label="Filtro de recorridos">
+    <label>Buscar línea o destino<input id="buscar" type="search" placeholder="Empresa, línea, destino…" autocomplete="off"></label>
+    <label>Empresa<select id="empresa"><option value="">Todas</option></select></label>
+    <label>Tipo<select id="tipo"><option value="">Suburbanas y departamentales</option><option value="suburbano_metropolitano">Suburbanas metropolitanas</option><option value="departamental_canelones">Departamentales de Canelones</option><option value="regional_san_jose">Regionales de San José</option></select></label>
+    <label>Sentido<select id="sentido"><option value="">Todos</option></select></label>
+    <p id="count">Esperando datos autorizados</p>
+    <div id="resultados" class="resultados"></div>
+  </aside>
+  <section class="mapwrap" aria-label="Trazados y paradas">
+    <div id="map"></div>
+    <div id="leyenda">Seleccioná hasta tres recorridos. Mantené pulsado uno para destacarlo.</div>
+    <div id="paradasEstado" aria-live="polite">Sin recorridos seleccionados</div>
+  </section>
+</main>
+<footer id="status">Estado: esperando autorización</footer>
+</body>
+</html>
