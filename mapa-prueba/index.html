@@ -5,7 +5,7 @@
 <meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="theme-color" content="#123956"><title>Mapa STM — Vista previa</title>
 <link rel="icon" href="../icon-192.png" type="image/png">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoamYjzR+JW1nA=" crossorigin="anonymous">
+<link rel="stylesheet" href="./leaflet.css">
 <style>
 :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#163448;background:#edf3f6;--primary:#123956}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden}body{display:flex;flex-direction:column}
@@ -69,6 +69,7 @@ for(const id of ['buscar','empresa','tipo','sentido'])el(id).addEventListener('i
 function inicarMapa(){if(typeof L==='undefined'){texto('carga','No se cargó la biblioteca del mapa');return;}
  map=L.map('mapa',{preferCanvas:true}).setView([-34.76,-56.08],10);
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
+ setTimeout(()=>map?.invalidateSize({pan:false}),150);
 }
 function cerrarEnMovil(){if(matchMedia('(max-width:740px)').matches)sidebar(false)}
 function opciones(){for(const [name,field,caption] of [['empresa','empresa','Todas las empresas'],['sentido','sentido','Todos los sentidos']]){
@@ -85,7 +86,7 @@ function resultados(){const busc=normal(el('buscar').value.trim()),empresa=el('e
   const button=document.createElement('button');button.className='resultado';button.type='button';button.setAttribute('aria-pressed',String(seleccion.some(x=>x.id===r.id)));
   if(prioritario===r.id)button.classList.add('enfasis');
   const b=document.createElement('b');b.textContent=`${r.empresa} · ${r.linea}`;
-  const s=document.createElement('small');s.textContent=`${r.destino||r.variante} · ${r.paradas.length} paradas · ${r.fuente==='CANDIDATA'?'Trazo candidato':r.fuente==='STM_T20_HISTORICO'?'STM histórico':'MTOP'}`;
+  const s=document.createElement('small');s.textContent=`${r.destino||r.variante} · ${r.paradas.length?`${r.paradas.length} paradas`:'paradas no disponibles'} · ${r.fuente==='CANDIDATA'?'Trazo candidato':r.fuente==='STM_T20_HISTORICO'?'STM histórico':'MTOP'}`;
   button.append(b,s);
   let timer=null,long=false,x=0,y=0;
   button.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;long=false;x=e.clientX;y=e.clientY;clearTimeout(timer);
@@ -120,7 +121,7 @@ function dibujar(){if(!map)return;for(const c of capas)map.removeLayer(c);capas=
   }
  });
  if(coords.length>1){map.fitBounds(coords,{padding:[24,24],maxZoom:13})}
- texto('estado',`${seleccion.length} recorridos seleccionados · ${total} paradas localizadas${seleccion.some(r=>r.paradas.length===0)?' · No todas las fuentes incluyen paradas':''}`);
+ texto('estado',`${seleccion.length} recorridos seleccionados · ${total} paradas localizadas${seleccion.some(r=>r.paradas.length===0)?' · Algunas rutas no tienen paradas en la muestra':''}`);
  const lg=el('leyenda');lg.replaceChildren();
  if(!seleccion.length){lg.textContent='Tocá un recorrido para verlo. Podés comparar tres. Mantenelo pulsado para destacarlo.';return;}
  seleccion.forEach((r,i)=>{const b=document.createElement('button');b.type='button';b.textContent=`${i+1}. ${r.empresa} ${r.linea}${prioritario===r.id?' ★':''}`;b.style.borderColor=colores[i];b.setAttribute('aria-pressed',String(prioritario===r.id));
