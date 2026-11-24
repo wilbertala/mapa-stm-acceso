@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es-UY">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#123956"><title>Mapa STM — Vista previa</title>
+<link rel="icon" href="../icon-192.png" type="image/png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoamYjzR+JW1nA=" crossorigin="anonymous">
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#163448;background:#edf3f6;--primary:#123956}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden}body{display:flex;flex-direction:column}
+header{background:var(--primary);color:white;padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header strong{font-size:1.12rem}header span{font-size:.81rem;opacity:.9}
+.warning{background:#fff0cf;color:#5b3d0c;padding:7px 12px;font-size:.8rem;font-weight:600;border-bottom:1px solid #f2d89b}
+nav{background:white;display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid #c7d7dd;z-index:1003}
+nav button{flex-shrink:0}button,select,input{font:inherit}button{background:white;color:#143e56;border:1px solid #9fb8c7;border-radius:8px;padding:9px 10px;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #047db6;outline-offset:1px}
+button[aria-pressed="true"]{background:#d4eef4;border-color:#167c9c;border-width:2px}
+nav button:first-child{background:#123956;color:white;font-weight:700}
+#carga{flex:1;text-align:right;font-size:.75rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#526576}
+main{display:flex;flex:1;min-height:0;position:relative}
+aside{width:350px;max-width:40vw;flex-shrink:0;background:#fff;border-right:1px solid #c7d7dd;padding:12px;display:flex;flex-direction:column;gap:10px;overflow:auto;z-index:901}
+aside.hidden{display:none}
+label{font-weight:650;font-size:.82rem;display:grid;gap:5px}input,select{width:100%;min-width:0;background:white;border:1px solid #9fb8c7;border-radius:7px;padding:9px;color:#183749}
+#cuenta{font-size:.8rem;color:#587085;margin:0}
+#resultados{display:grid;gap:7px}
+.resultado{width:100%;text-align:left;display:block;user-select:none;-webkit-user-select:none;touch-action:pan-y;padding:9px 10px;line-height:1.36;background:#fafdff}
+.resultado b,.resultado small{display:block}.resultado small{font-size:.75rem;color:#5d6e78;margin-top:2px}
+.resultado.enfasis{box-shadow:inset 5px 0 #b3630b;background:#ffedc7;border-color:#b3630b}
+.mapwrap{position:relative;flex:1;min-width:0}#mapa{height:100%;width:100%;background:#dfe8ec}
+#estado,#leyenda{position:absolute;z-index:450;left:10px;border:1px solid #ccdfe1;background:rgba(255,255,255,.96);border-radius:8px;padding:8px 10px;font-size:.76rem;max-width:min(94%,600px);box-shadow:0 2px 6px #0001}
+#estado{top:10px}#leyenda{bottom:14px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#leyenda button{font-size:.75rem;padding:5px 7px;border-width:2px}
+footer{padding:4px 11px;background:#e4edf0;color:#405767;font-size:.73rem}
+@media(max-width:740px){header{padding:7px 10px}header span{display:none}.warning{padding:6px 10px;font-size:.72rem}aside{position:absolute;top:0;bottom:0;left:0;width:min(89vw,350px);max-width:none;box-shadow:3px 1px 14px #0003}nav{padding:6px;gap:4px}nav button{font-size:.78rem;padding:10px 7px}#carga{font-size:.67rem}#estado,#leyenda{max-width:94%;font-size:.7rem}#leyenda{max-height:88px;overflow:auto}}
+@media(max-height:500px){header{padding:4px 8px}.warning{padding:3px 10px}nav{padding:4px}nav button{padding:6px 7px}}
+</style>
+</head>
+<body>
+<header><strong>Mapa STM</strong><span>Líneas suburbanas y departamentales · Vista previa</span></header>
+<div class="warning">VISTA PREVIA PÚBLICA · Datos históricos y trazados candidatos; no acredita servicios vigentes. No permite editar.</div>
+<nav aria-label="Controles"><button type="button" id="alternar" aria-expanded="true" aria-controls="panel">☷ Líneas y filtros</button><button type="button" id="centrar">◎ Centrar</button><button type="button" id="limpiar">✕ Quitar</button><span id="carga" role="status">Cargando datos…</span></nav>
+<main>
+<aside id="panel">
+<label>Buscar empresa, línea o destino<input type="search" id="buscar" placeholder="Ej.: COPSA, 710, Atlántida" autocomplete="off"></label>
+<label>Empresa<select id="empresa"><option value="">Todas las empresas</option></select></label>
+<label>Tipo<select id="tipo"><option value="">Suburbanas y departamentales</option><option value="suburbano_metropolitano">Suburbanas</option><option value="departamental_canelones">Departamentales Canelones</option><option value="regional_san_jose">Regionales San José</option></select></label>
+<label>Sentido<select id="sentido"><option value="">Todos los sentidos</option></select></label>
+<p id="cuenta">Esperando datos</p><div id="resultados"></div>
+</aside>
+<section class="mapwrap" aria-label="Mapa de recorridos y paradas">
+<div id="mapa"></div><div id="estado" aria-live="polite">Seleccioná un recorrido en ☷ Líneas y filtros.</div>
+<div id="leyenda">Tocá un recorrido para mostrarlo. Mantenelo pulsado para destacarlo.</div>
+</section>
+</main>
+<footer>Vista de prueba aislada del ADMINISTRADOR y de INVITADOS. Fuente de trazados: MTOP 2026; paradas históricas STM T20.</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+<script>
+'use strict';
+const el=id=>document.getElementById(id);
+let catalogo=[],seleccion=[],prioritario='',map=null,capas=[],mostradas=[],colores=['#db3c36','#1462cc','#068c60'];
+const normal=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es');
+function texto(id,s){el(id).textContent=s}
+function sidebar(open){el('panel').classList.toggle('hidden',!open);el('alternar').setAttribute('aria-expanded',String(open));if(map)setTimeout(()=>map.invalidateSize(),80)}
+el('alternar').addEventListener('click',()=>sidebar(el('panel').classList.contains('hidden')));
+el('centrar').addEventListener('click',()=>map?.setView([-34.76,-56.08],10));
+el('limpiar').addEventListener('click',()=>{seleccion=[];prioritario='';dibujar();resultados()});
+for(const id of ['buscar','empresa','tipo','sentido'])el(id).addEventListener('input',resultados);
+function inicarMapa(){if(typeof L==='undefined'){texto('carga','No se cargó la biblioteca del mapa');return;}
+ map=L.map('mapa',{preferCanvas:true}).setView([-34.76,-56.08],10);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
+}
+function cerrarEnMovil(){if(matchMedia('(max-width:740px)').matches)sidebar(false)}
+function opciones(){for(const [name,field,caption] of [['empresa','empresa','Todas las empresas'],['sentido','sentido','Todos los sentidos']]){
+ const node=el(name),previous=node.value;
+ node.replaceChildren(new Option(caption,''));
+ [...new Set(catalogo.map(r=>r[field]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es')).forEach(v=>node.add(new Option(v,v)));
+ node.value=previous;
+}}
+function resultados(){const busc=normal(el('buscar').value.trim()),empresa=el('empresa').value,tipo=el('tipo').value,sentido=el('sentido').value;
+ const found=catalogo.filter(r=>(!empresa||r.empresa===empresa)&&(!tipo||r.tipo===tipo)&&(!sentido||r.sentido===sentido)&&(!busc||normal([r.empresa,r.linea,r.destino,r.variante].join(' ')).includes(busc)));
+ texto('cuenta',`${found.length} recorridos en esta selección · ${catalogo.length} en la vista previa`);
+ const fragment=document.createDocumentFragment();
+ for(const r of found.slice(0,130)){
+  const button=document.createElement('button');button.className='resultado';button.type='button';button.setAttribute('aria-pressed',String(seleccion.some(x=>x.id===r.id)));
+  if(prioritario===r.id)button.classList.add('enfasis');
+  const b=document.createElement('b');b.textContent=`${r.empresa} · ${r.linea}`;
+  const s=document.createElement('small');s.textContent=`${r.destino||r.variante} · ${r.paradas.length} paradas · ${r.fuente==='CANDIDATA'?'Trazo candidato':r.fuente==='STM_T20_HISTORICO'?'STM histórico':'MTOP'}`;
+  button.append(b,s);
+  let timer=null,long=false,x=0,y=0;
+  button.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;long=false;x=e.clientX;y=e.clientY;clearTimeout(timer);
+   timer=setTimeout(()=>{long=true;if(!seleccion.some(v=>v.id===r.id))elegir(r,false);prioritario=prioritario===r.id?'':r.id;dibujar();resultados();cerrarEnMovil()},550);
+  });
+  button.addEventListener('pointermove',e=>{if(Math.hypot(e.clientX-x,e.clientY-y)>12)clearTimeout(timer)});
+  for(const n of ['pointerup','pointercancel','pointerleave'])button.addEventListener(n,()=>clearTimeout(timer));
+  button.addEventListener('contextmenu',e=>e.preventDefault());
+  button.addEventListener('click',e=>{if(long){long=false;e.preventDefault();return}elegir(r,true)});
+  fragment.append(button);
+ }
+ const node=el('resultados');node.replaceChildren(fragment);
+ if(found.length>130){const p=document.createElement('p');p.textContent='Se muestran 130 resultados. Refiná la búsqueda.';node.append(p)}
+}
+function elegir(r,close){if(seleccion.some(x=>x.id===r.id)){seleccion=seleccion.filter(x=>x.id!==r.id);if(prioritario===r.id)prioritario=''}
+ else {if(seleccion.length>=3){const old=seleccion.shift();if(prioritario===old.id)prioritario=''}seleccion.push(r)}
+ resultados();dibujar();if(close)cerrarEnMovil();}
+function crearPopup(text){const d=document.createElement('span');d.textContent=text;return d}
+function dibujar(){if(!map)return;for(const c of capas)map.removeLayer(c);capas=[];
+ const coords=[];let total=0;
+ seleccion.forEach((r,i)=>{
+  const enfocado=!prioritario||prioritario===r.id;
+  if(r.geometria?.length>1){const line=L.polyline(r.geometria,{color:colores[i],weight:enfocado?7:3,opacity:enfocado?1:.24}).addTo(map);
+   line.bindPopup(crearPopup(`${r.empresa} ${r.linea} · ${r.destino} · ${r.fuente==='CANDIDATA'?'Trazo candidato': 'Fuente histórica'}`));capas.push(line);
+   if(enfocado)coords.push(...r.geometria);
+  }
+  const st=(r.paradas||[]);total+=st.length;
+  for(const p of st){const latlon=[p.lat,p.lon];
+   const m=L.circleMarker(latlon,{radius:enfocado?4.8:3,color:colores[i],weight:1.4,fillColor:'#fff',fillOpacity:enfocado?.95:.3}).addTo(map);
+   m.bindPopup(crearPopup(`${r.linea} · parada ${p.orden}: ${p.nombre}`));capas.push(m);
+   if(enfocado&&!r.geometria?.length)coords.push(latlon);
+  }
+ });
+ if(coords.length>1){map.fitBounds(coords,{padding:[24,24],maxZoom:13})}
+ texto('estado',`${seleccion.length} recorridos seleccionados · ${total} paradas localizadas${seleccion.some(r=>r.paradas.length===0)?' · No todas las fuentes incluyen paradas':''}`);
+ const lg=el('leyenda');lg.replaceChildren();
+ if(!seleccion.length){lg.textContent='Tocá un recorrido para verlo. Podés comparar tres. Mantenelo pulsado para destacarlo.';return;}
+ seleccion.forEach((r,i)=>{const b=document.createElement('button');b.type='button';b.textContent=`${i+1}. ${r.empresa} ${r.linea}${prioritario===r.id?' ★':''}`;b.style.borderColor=colores[i];b.setAttribute('aria-pressed',String(prioritario===r.id));
+ b.title='Destacar este recorrido';b.addEventListener('click',()=>{prioritario=prioritario===r.id?'':r.id;dibujar();resultados()});lg.append(b)})
+}
+async function iniciar(){inicarMapa();if(!map)return;
+ try{const response=await fetch('./datos.json',{cache:'no-store'});if(!response.ok)throw Error(`HTTP ${response.status}`);
+ const datos=await response.json();if(datos.tipo!=='VISTA_PREVIA_PUBLICA'||!Array.isArray(datos.recorridos))throw Error('Formato no esperado');
+ catalogo=datos.recorridos.filter(r=>r&&r.tipo!=='urbano'&&['suburbano_metropolitano','departamental_canelones','regional_san_jose'].includes(r.tipo));
+ opciones();resultados();texto('carga',`${catalogo.length} recorridos de muestra`);texto('estado','Elegí un recorrido desde ☷ Líneas y filtros.');
+ }catch(e){texto('carga','No se pudieron cargar los datos');texto('estado',`Error al cargar catálogo: ${e.message}`)}
+}
+iniciar();
+</script>
+</body>
+</html>
