@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow,noarchive">
-<meta name="theme-color" content="#123956"><title>Mapa STM — Vista previa</title>
+<meta name="theme-color" content="#123956"><title>Mapa STM — Catálogo suburbano y departamental</title>
 <link rel="icon" href="../icon-192.png" type="image/png">
 <link rel="stylesheet" href="./leaflet.css">
 <style>
@@ -38,13 +38,13 @@ footer{padding:4px 11px;background:#e4edf0;color:#405767;font-size:.73rem}
 </head>
 <body>
 <header><strong>Mapa STM</strong><span>Líneas suburbanas y departamentales · Vista previa</span></header>
-<div class="warning">VISTA PREVIA PÚBLICA · Datos históricos y trazados candidatos; no acredita servicios vigentes. No permite editar.</div>
+<div class="warning">CATÁLOGO HISTÓRICO · 15 empresas suburbanas, departamentales y regionales. Las rutas pueden no estar vigentes. No permite editar.</div>
 <nav aria-label="Controles"><button type="button" id="alternar" aria-expanded="true" aria-controls="panel">☷ Líneas y filtros</button><button type="button" id="centrar">◎ Centrar</button><button type="button" id="limpiar">✕ Quitar</button><span id="carga" role="status">Cargando datos…</span></nav>
 <main>
 <aside id="panel">
 <label>Buscar empresa, línea o destino<input type="search" id="buscar" placeholder="Ej.: COPSA, 710, Atlántida" autocomplete="off"></label>
 <label>Empresa<select id="empresa"><option value="">Todas las empresas</option></select></label>
-<label>Tipo<select id="tipo"><option value="">Suburbanas y departamentales</option><option value="suburbano_metropolitano">Suburbanas</option><option value="departamental_canelones">Departamentales Canelones</option><option value="regional_san_jose">Regionales San José</option></select></label>
+<label>Tipo<select id="tipo"><option value="">Todas las categorías</option><option value="departamental_regional">Departamentales y regionales</option><option value="suburbano_metropolitano">Suburbanas</option><option value="departamental_canelones">Departamentales Canelones</option><option value="regional_san_jose">Regionales San José</option></select></label>
 <label>Sentido<select id="sentido"><option value="">Todos los sentidos</option></select></label>
 <p id="cuenta">Esperando datos</p><div id="resultados"></div>
 </aside>
@@ -53,7 +53,7 @@ footer{padding:4px 11px;background:#e4edf0;color:#405767;font-size:.73rem}
 <div id="leyenda">Tocá un recorrido para mostrarlo. Mantenelo pulsado para destacarlo.</div>
 </section>
 </main>
-<footer>Vista de prueba aislada del ADMINISTRADOR y de INVITADOS. Fuente de trazados: MTOP 2026; paradas históricas STM T20.</footer>
+<footer>Vista informativa: MTOP y catálogos históricos. Algunos recorridos carecen de geometría o paradas. No modifica ADMINISTRADOR ni INVITADOS.</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 <script>
 'use strict';
@@ -79,14 +79,14 @@ function opciones(){for(const [name,field,caption] of [['empresa','empresa','Tod
  node.value=previous;
 }}
 function resultados(){const busc=normal(el('buscar').value.trim()),empresa=el('empresa').value,tipo=el('tipo').value,sentido=el('sentido').value;
- const found=catalogo.filter(r=>(!empresa||r.empresa===empresa)&&(!tipo||r.tipo===tipo)&&(!sentido||r.sentido===sentido)&&(!busc||normal([r.empresa,r.linea,r.destino,r.variante].join(' ')).includes(busc)));
- texto('cuenta',`${found.length} recorridos en esta selección · ${catalogo.length} en la vista previa`);
+ const found=catalogo.filter(r=>(!empresa||r.empresa===empresa)&&(!tipo||r.tipo===tipo||(tipo==='departamental_regional'&&['departamental_canelones','regional_san_jose'].includes(r.tipo)))&&(!sentido||r.sentido===sentido)&&(!busc||normal([r.empresa,r.linea,r.destino,r.variante].join(' ')).includes(busc)));
+ texto('cuenta',`${found.length} recorridos encontrados · ${catalogo.length} en el catálogo · 15 empresas`);
  const fragment=document.createDocumentFragment();
  for(const r of found.slice(0,130)){
   const button=document.createElement('button');button.className='resultado';button.type='button';button.setAttribute('aria-pressed',String(seleccion.some(x=>x.id===r.id)));
   if(prioritario===r.id)button.classList.add('enfasis');
   const b=document.createElement('b');b.textContent=`${r.empresa} · ${r.linea}`;
-  const s=document.createElement('small');s.textContent=`${r.destino||r.variante} · ${r.paradas.length?`${r.paradas.length} paradas`:'paradas no disponibles'} · ${r.fuente==='CANDIDATA'?'Trazo candidato':r.fuente==='STM_T20_HISTORICO'?'STM histórico':'MTOP'}`;
+  const s=document.createElement('small');const conTraza=Array.isArray(r.geometria)&&r.geometria.length>1;const fuente=r.fuente==='CANDIDATA'?'Trazado candidato':r.fuente==='STM_T20_HISTORICO'?'STM histórico':r.fuente==='MTOP'?'Trazado MTOP':'Catálogo histórico';s.textContent=`${r.destino||r.variante} · ${conTraza?fuente:'TRAZADO NO DISPONIBLE'} · ${r.paradas.length?`${r.paradas.length} paradas`:'Paradas no disponibles'}`;
   button.append(b,s);
   let timer=null,long=false,x=0,y=0;
   button.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;long=false;x=e.clientX;y=e.clientY;clearTimeout(timer);
@@ -99,7 +99,7 @@ function resultados(){const busc=normal(el('buscar').value.trim()),empresa=el('e
   fragment.append(button);
  }
  const node=el('resultados');node.replaceChildren(fragment);
- if(found.length>130){const p=document.createElement('p');p.textContent='Se muestran 130 resultados. Refiná la búsqueda.';node.append(p)}
+ if(found.length>130){const p=document.createElement('p');p.textContent='Se muestran 130 resultados. Filtrá por empresa, tipo o buscá una línea.';node.append(p)}
 }
 function elegir(r,close){if(seleccion.some(x=>x.id===r.id)){seleccion=seleccion.filter(x=>x.id!==r.id);if(prioritario===r.id)prioritario=''}
  else {if(seleccion.length>=3){const old=seleccion.shift();if(prioritario===old.id)prioritario=''}seleccion.push(r)}
@@ -121,7 +121,7 @@ function dibujar(){if(!map)return;for(const c of capas)map.removeLayer(c);capas=
   }
  });
  if(coords.length>1){map.fitBounds(coords,{padding:[24,24],maxZoom:13})}
- texto('estado',`${seleccion.length} recorridos seleccionados · ${total} paradas localizadas${seleccion.some(r=>r.paradas.length===0)?' · Algunas rutas no tienen paradas en la muestra':''}`);
+ const faltanTraza=seleccion.filter(r=>!r.geometria?.length&&!r.paradas?.length).length;texto('estado',`${seleccion.length} recorridos seleccionados · ${total} paradas localizadas${faltanTraza?' · '+faltanTraza+' sin trazado geográfico':''}${seleccion.some(r=>r.paradas.length===0)?' · Algunas rutas sin paradas localizadas':''}`);
  const lg=el('leyenda');lg.replaceChildren();
  if(!seleccion.length){lg.textContent='Tocá un recorrido para verlo. Podés comparar tres. Mantenelo pulsado para destacarlo.';return;}
  seleccion.forEach((r,i)=>{const b=document.createElement('button');b.type='button';b.textContent=`${i+1}. ${r.empresa} ${r.linea}${prioritario===r.id?' ★':''}`;b.style.borderColor=colores[i];b.setAttribute('aria-pressed',String(prioritario===r.id));
@@ -130,8 +130,8 @@ function dibujar(){if(!map)return;for(const c of capas)map.removeLayer(c);capas=
 async function iniciar(){inicarMapa();if(!map)return;
  try{const response=await fetch('./datos.json',{cache:'no-store'});if(!response.ok)throw Error(`HTTP ${response.status}`);
  const datos=await response.json();if(datos.tipo!=='VISTA_PREVIA_PUBLICA'||!Array.isArray(datos.recorridos))throw Error('Formato no esperado');
- catalogo=datos.recorridos.filter(r=>r&&r.tipo!=='urbano'&&['suburbano_metropolitano','departamental_canelones','regional_san_jose'].includes(r.tipo));
- opciones();resultados();texto('carga',`${catalogo.length} recorridos de muestra`);texto('estado','Elegí un recorrido desde ☷ Líneas y filtros.');
+ catalogo=datos.recorridos.filter(r=>r&&['suburbano_metropolitano','departamental_canelones','regional_san_jose'].includes(r.tipo));
+ opciones();resultados();texto('carga',`${catalogo.length} recorridos · 15 empresas`);texto('estado','Elegí una empresa y un recorrido desde ☷ Líneas y filtros. Si no hay trazado, se indicará expresamente.');
  }catch(e){texto('carga','No se pudieron cargar los datos');texto('estado',`Error al cargar catálogo: ${e.message}`)}
 }
 iniciar();
