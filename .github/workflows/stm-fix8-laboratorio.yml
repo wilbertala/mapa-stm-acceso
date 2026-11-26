@@ -1,0 +1,64 @@
+name: Laboratorio FIX8 - navegador real
+on:
+  push:
+    paths:
+      - '.github/workflows/stm-fix8-laboratorio.yml'
+      - 'mapa-prueba/fix8-20261126/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prueba:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependencias de prueba
+        run: |
+          cd "$RUNNER_TEMP"
+          npm install --no-save playwright@1.51.1 leaflet@1.9.4
+          npx playwright install --with-deps chromium
+      - name: Leaflet real e IndexedDB
+        shell: bash
+        run: |
+          cp mapa-prueba/fix8-20261126/index.html "$RUNNER_TEMP/stm-fix8.html"
+          cd "$RUNNER_TEMP"
+          cat > stm-fix8-test.cjs <<'JS'
+          const {chromium}=require('playwright');
+          const http=require('http'),fs=require('fs'),assert=require('node:assert/strict');
+          const html=fs.readFileSync('stm-fix8.html');
+          const server=http.createServer((req,res)=>{if(req.url==='/'){res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html)}else{res.writeHead(404);res.end()}});
+          (async()=>{
+            await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
+            const browser=await chromium.launch();
+            try {
+              const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+              const page=await context.newPage();const errors=[];
+              page.on('pageerror',e=>errors.push(e.message));
+              await page.route('https://unpkg.com/leaflet@1.9.4/dist/*',route=>{const name=route.request().url().split('/').pop();if(!['leaflet.js','leaflet.css'].includes(name))return route.abort();return route.fulfill({path:'node_modules/leaflet/dist/'+name,contentType:name.endsWith('.js')?'application/javascript':'text/css',headers:{'access-control-allow-origin':'*'}})});
+              await page.route('https://tile.openstreetmap.org/**',r=>r.abort());
+              await page.goto('http://127.0.0.1:'+server.address().port+'/');
+              async function choose(){for(const [i,id] of ['A','B','C'].entries()){await page.locator('[data-id="LAB:'+id+'"]').click();await page.waitForFunction(n=>document.querySelectorAll('.chip').length===n,i+1)}}
+              await choose();
+              await page.locator('#retryMap').click();
+              await page.waitForFunction(()=>window.L?.version==='1.9.4'&&!document.getElementById('leafmap').hidden&&!!document.querySelector('#leafmap canvas'));
+              assert.match(await page.locator('#summary').innerText(),/Comunes a las tres: 1/);
+              assert.equal(await page.locator('#stops button').count(),3);
+              await page.locator('#stops button').first().click();
+              assert.equal(await page.locator('#stopDetail').isVisible(),true);
+              console.log('Leaflet 1.9.4 real, tres variantes, comparación triple y detalle de parada: OK');
+              const keys=()=>page.evaluate(()=>new Promise((ok,fail)=>{const q=indexedDB.open('STM_FIX8_LAB_20261126',1);q.onerror=fail;q.onsuccess=()=>{const db=q.result;const r=db.transaction('data').objectStore('data').getAllKeys();r.onsuccess=()=>{db.close();ok(r.result)};r.onerror=fail}}));
+              for(let i=0;i<30&&(await keys()).length!==6;i++)await page.waitForTimeout(100);
+              assert.equal((await keys()).length,6);
+              await page.reload();await choose();
+              assert.equal(await page.evaluate(()=>window.LAB_CONSULTAS.seleccion),0);
+              assert.equal((await keys()).length,6);
+              assert.deepEqual(errors,[]);
+              console.log('IndexedDB real: seis entradas persistentes; cero llamadas de selección tras recarga: OK');
+            } finally {await browser.close();server.close()}
+          })().catch(e=>{console.error(e);server.close();process.exitCode=1});
+          JS
+          node stm-fix8-test.cjs
